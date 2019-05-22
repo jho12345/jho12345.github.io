@@ -1,0 +1,498 @@
+---
+title: "CMSC320 Final Tutorial"
+author: "Austin Kim, James Ho"                                            
+course: "CMSC320 - Spring 2019"
+date: "Héctor Corrada Bravo"
+output: html_document
+---
+
+
+__________________________________________________________________________________
+
+![](Rstudiologo.png){width=20%}                       
+![](dataverse.png){width=50%} 
+
+
+# Introduction
+
+
+#####This tutorial was made with the purpose of making discoveries by analyzing students' academic AND social statistics. 
+#####We will be analyzing a dataset on students in secondary school, taking a math class. Our data contains a lot of interesting social, gender, and study habit information about students. 
+#####We can use it to make a lot of compelling insights and determine the best predictors of students' final grades.
+
+
+#The Dataset
+
+#####The dataset we will analyze and extrapolate from is titled "Student Alcohol Consumption." We obtained this dataset from the Kaggle Database that contains a variety of datasets for popular use. 
+#####You can download the particular dataset we used [here](https://www.kaggle.com/uciml/student-alcohol-consumption/downloads/student-alcohol-consumption.zip/2#student-por.csv). 
+#####If you plan on working on this dataset on your own or following step by step with this tutorial, make sure you unzip the csv files into the same working directory that you will be writing your R code in!
+
+##Content of the Dataset
+
+###Attributes  
+
+1.  **school**: student's school (binary: 'GP' - Gabriel Pereira or 'MS' - Mousinho da Silveira)  
+2.  **sex**: student's sex (binary: 'F' - female or 'M' - male)  
+3.  **age**: student's age (numeric: from 15 to 22)  
+4.  **address**: student's home address type (binary: 'U' - urban or 'R' - rural)
+5.  **famsize**: family size (binary: 'LE3' - less or equal to 3 or 'GT3' - greater than 3)
+6.  **Pstatus**: parent's cohabitation status (binary: 'T' - living together or 'A' - apart)
+7.  **Medu**: mother's education (numeric: 0-none, 1-primary education(4th grade), 2 - 5th to 9th grade, 3 - secondary-education or 4 - higher-education)
+8.  **Fedu**: father's education (numeric: 0-none, 1 - primary education (4th grade), 2 - 5th to 9th grade, 3 - secondary education or 4 - higher education)
+9.  **Mjob**: mother's job (nominal: 'teacher', 'health' care related, civil 'services' (e.g. administrative or police), 'at_home' or 'other')
+10.  **Fjob**: father's job (nominal: 'teacher', 'health' care related, civil 'services' (e.g. administrative or police), 'at_home' or 'other')
+11.  **reason**: reason to choose this school (nominal: close to 'home', school 'reputation', 'course' preference or 'other')
+12.  **guardian**: student's guardian (nominal: 'mother', 'father' or 'other')
+13.  **traveltime**: home to school travel time (numeric: 1 - <15 min., 2 - 15 to 30 min., 3 - 30 min. to 1 hour, or 4 - >1 hour)
+14.  **studytime**: weekly study time (numeric: 1 - <2 hours, 2 - 2 to 5 hours, 3 - 5 to 10 hours, or 4 - >10 hours)
+15.  **failures**: number of past class failures (numeric: n if 1<=n<3, else 4)
+16.  **schoolsup**: extra educational support (binary: yes or no)
+17.  **famsup**: family educational support (binary: yes or no)
+18.  **paid**: extra paid classes within the course subject (Math or Portuguese) (binary: yes or no)
+19.  **activities**: extra-curricular activities (binary: yes or no)
+20.  **nursery**: attended nursery school (binary: yes or no)
+21.  **higher**: wants to take higher education (binary: yes or no)
+22.  **internet**: Internet access at home (binary: yes or no)
+23.  **romantic**: with a romantic relationship (binary: yes or no)
+24.  **famrel**: quality of family relationships (numeric: from 1 - very bad to 5 - excellent)
+25.  **freetime**: free time after school (numeric: from 1 - very low to 5 - very high)
+26.  **goout**: going out with friends (numeric: from 1 - very low to 5 - very high)
+27.  **Dalc**: workday alcohol consumption (numeric: from 1 - very low to 5 - very high)
+28.  **Walc**: weekend alcohol consumption (numeric: from 1 - very low to 5 - very high)
+29.  **health**: current health status (numeric: from 1 - very bad to 5 - very good)
+30.  **absences**: number of school absences (numeric: from 0 to 93)  
+
+These grades are related with the course subject, Math or Portuguese:  
+
+* G1: first period grade (numeric: from 0 to 20)
+* G2: second period grade (numeric: from 0 to 20)
+* G3: final grade (numeric: from 0 to 20, output target)
+
+
+
+# Tutorial Chapters
+
+**Chapter**  |  **Description**
+------------ |  -----------------------------------------------------------------------------------------
+**1**            |  Average difference in grades between Males and Females
+**2**            |  Impact of hours studied on academic performance
+**3**            |  Using Linear Regression to make estimates on final grades
+**4**            |  Analysis of models Residuals
+**5**            |  Average comparison: Desire for higher education -> impact on student grades
+**6**            |  Multivariate plotting: Analysis of female students and Mother's education and occupation
+**7**            |  Academic performance and romantic relationships
+**8**            |  Plot of alcohol consumption and academic success
+**9**            |  Student alcohol consumption and family relationships
+**10**           |  Multivariable linear models, testing, and variance
+**11**           |  MultiFaceted graph
+**12**           |  Machine Learning LDA: determining students' desire to pursue higher education
+---> 12.1    |  ......  Class means and squared error
+---> 12.2    |  ......  Sum of squared errors
+---> 12.3    |  ......  Variance
+---> 12.4    |  ......  Predictions
+---> 12.5    |  ......  Truth table
+---> 12.6    |  ......  Error rate
+---> 12.7    |  ......  ROC
+---> 12.8    |  ......  AUROC
+---> 12.9    |  ......  Precision Recall  
+
+
+
+#Data Management and Preparation
+
+```{r setupdb, include=FALSE}
+library(gapminder)
+library(tidyverse)
+library(broom)
+library(dplyr)
+library(tidyr)
+library(jsonlite)
+
+```
+
+###Loading the data set
+```{r loadingDS, include=TRUE}
+student_data <- read_csv("student-mat.csv")
+```
+
+Here is a summary of our data
+```{r data}
+student_data
+```
+
+
+
+##1. Average Difference in grades between males and females
+
+####Lets see the average final grade difference between males and females
+```{r 1}
+colors = c("Female", "Male")
+student_data %>%
+  group_by(sex) %>%
+  summarise(final_grade=mean(G3)) %>%
+  ggplot(mapping=aes(y=final_grade, x=sex, fill = colors)) +
+    geom_bar(stat="identity") +
+  labs(title = "Male vs Female Average Grades")
+```
+
+Based on our graph we can say that males scored a higher final grade in math compared to girls by almost 1 point. The final grade is out of 20 points. So males got an average of 10.5/20 and females got an average of 9.5/20. If you want to learn more about plotting graphs in r, [here](https://www.statmethods.net/advgraphs/ggplot2.html) is a link to familiarize yourself with the ggplot function.
+
+
+
+##2. Impact of hours studied on academic performance
+
+####Next, let's see how grades are affected by a student's amount of hours spent studying per week.
+```{r 2}
+student_data %>%
+  ggplot(mapping=aes(y=G3, x=factor(studytime))) +
+    geom_boxplot() +
+  labs(title = "Study time Boxplots")
+```
+
+These boxplots show us the distribution of final grades students get based on their study time. The box plot shows the first and third quartiles, as well as the average final grades per hours spent studying. We use the factor() method on our studytime attribute in order to make 4 different boxplots (one for each hour), rather than one boxplot for the entire dataset. Clearly, there is a trend where students that study longer per week tend to have high final grades on average. Thus we conclude, that studying directly affects a student's test grades.
+
+
+
+##3. Using Linear Regression to make estimates on final grades
+
+####We construct a linear regression model of studytime relation with the average grade for each time. 
+```{r 3 lr}
+student_data %>%
+  group_by(studytime) %>%
+  summarise(ave_grade=mean(G3)) %>%
+  ggplot(mapping=aes(y=ave_grade, x=studytime)) +
+    geom_line() +
+    geom_smooth(method=lm) +
+  labs(title = "Study time Boxplots")
+```
+```{r 3.1 lr}
+ave_grades_data <- student_data %>%
+  group_by(studytime) %>%
+  summarise(ave_grade=mean(G3))
+fit <- lm(ave_grade~studytime, data=ave_grades_data)
+broom::tidy(fit)
+```
+
+  
+* According to the chart, we can see that the studytime increased the final grade by 0.486 per hour.  
+* Thus we can reject the null hypthesis(which says that there is no relationship between studytime and grade). 0.48 slope shows a clear relation between the two variables.  
+* If you are not confident on the basics of linear regression, you should read [this article](https://en.wikipedia.org/wiki/Linear_regression).  
+* Having a strong grasp on linear algebra is essential for finishing this tutorial.
+
+
+
+##4. Analysis of models Residuals
+
+####Let's now make a residuals vs. study hours graph for the linear model we made above.
+```{r 4}
+res_fit <- lm(G3~studytime, data=student_data)
+augmented_stat <- res_fit %>%
+  augment()
+augmented_stat %>%
+  ggplot(aes(x=factor(studytime),y=.resid)) +
+    labs(title = "Residuals vs. Studytime", x="hours", y="residual") +
+    geom_boxplot()
+```
+
+This plot of residuals is a measure of the discrepancy between the data, and our estimation model (the linear regression line). As you can see, our residuals are quite close to zero which mean our estimation model has a tight fit to our data. Thats great! Now if you need more information on the RSS(Residual sum of squares), I strongly recommend you read and study [this article](https://www.statisticshowto.datasciencecentral.com/residual-sum-squares/). 
+
+
+
+##5. Average comparison: Desire for higher education -> impact on student grades
+
+####Does a student's desire on going to college have a significant relationship with a student's grades? Or does future plans of going to college not have any effect on a students grades? We will check this by finding the average grade of students on both sides of college preference.
+```{r 5}
+student_data %>%
+  group_by(higher) %>%
+  summarise(mean(G3))
+```
+Wow, thats a difference of 3.8 points! This means that a student's desire to go to college is a huge indicator that they will be doing better academically than those that do not plan to go to college. We will take this to note when we create a machine learning model to predict a student's grade.
+
+
+
+##6. Multivariate plotting: Analysis of female students and Mother's education and occupation
+
+####Next, let's inquire whether or not a student's mother went to college and has a job has any effect on a female student's grades.
+```{r 6}
+student_data %>%
+  filter(sex=="F") %>%
+  ggplot(aes(x=Medu, y=G3)) +
+    geom_point() +
+    geom_smooth(method=lm)
+```
+
+We create a graph that compares female students' mother's education level with the grade obtained. The x-axis (Medu) represents the mother's education (0: none, 1: primary education(4th grade), 2: 5th to 9th grade, 3: secondary-education or 4: higher-education). There is an upward trend which means that there is a positive relationship although it is very slight. 
+
+
+
+##7. Academic performance and romantic relationships
+
+####Does a girl in a relationship do better at school compared to a boy in a relationship in school? Analyzing this would be interesting because it might give us insight on which sex is more effected in a negative or postive way, academically, when in a romantic relationship.
+```{r 7}
+student_data %>%
+  group_by(romantic, sex) %>%
+  summarise(grade=mean(G3))
+```
+- Our findings tell us that male and females in a relationship get worse grades on average compared to non-romantic students. This makes sense because students in relationship may be distracted by their boyfriend/girlfriend more than they are focused on school. Our finding also shows us that while cuffed males in a relationship do about 0.69 points worse than single boiis, females do 1.54 points worse in school when they are in a romantic relationship. Thus we can hypothesize that girls are more affected academically by romance than boys are. Ah... What young love can do...
+
+
+
+##8. Plot of alcohol consumption and academic success
+
+####How does alcohol consumption relate to a student's grades? Can you be an alcoholic and still be great at school? Lets find the average grades based on alcohol consumption of students. First lets sum up the total alcohol a student consumes per week by adding the week day and weekend alcohol consumptions together. We will use this sum in our analysis.
+```{r 8}
+student_data <- student_data %>%
+  mutate(total_alc = Dalc + Walc)
+```
+```{r 8.1}
+student_data %>%
+  ggplot(mapping=aes(y=G3, x=factor(total_alc), color=sex)) +
+    geom_point() 
+  labs(title = "Alcoholic students!")
+```
+Dalc and Walc represent the weekday and weekend alcohol consumption of students. We sum them togethor to result in total alc consumption and than we plot it with their final grades. We see that males fill up the plot on the right side which means they tend to drink a lot more throughout the week compared to females. There is also a clear trend in grades going down as students drink more alcohol.
+
+
+
+##9.  Student alcohol consumption and family relationships
+
+####Considering that alcohol has an affect on academic performance, let us ask how does family relationship status relate to a students alcohol consumption. Doing this may lead us to the cause of alochol consumption that is ruining grades.
+```{r 9}
+student_data %>%
+  ggplot(mapping=aes(y=total_alc, x=factor(famrel), color=sex)) +
+    geom_boxplot() +
+  labs(title = "Alcoholic students and families?")
+```
+
+This graph is quite meaty. Firstly, we see that males drink most when they have bad family relationships and they drink much less as their family relationship improves. On the other hand, girls' Alc consumption is constant regardless of their family relationship. We can conclude this analysis by saying that bad family relationships will make male students get worse grades because they will likely drink more alcohol which causes bad grades.
+
+
+
+##10. Multivariable linear models, testing, and variance
+
+####Now to confirm this speculation that family relationship status has an affect on students grades through alcohol, let us test this with analysis.
+```{r 10}
+fit1 <- lm(G3~total_alc*famrel, data = student_data)
+fit2 <- lm(total_alc~famrel, data = student_data)
+broom::tidy(fit1)
+```
+```{r 10.1}
+broom::tidy(fit2)
+```
+```{r 10.2}
+student_data %>%
+  ggplot(aes(x=famrel, y=G3, color=(total_alc))) +
+    geom_point() +
+    geom_smooth(method=lm) +
+  labs(title = "Family Relations and Alcohol Consumption's Impact on Grades")
+```
+
+* Our linear models of grades and alcohol and family_relations, shows that a students grades are estimated to go up by 1.08 for every 1 point he/she improves his family relations, while for each additional point a student drinks, he decreases his final school grade by 0.21. Basically, a healthy Family helps a student perform better, while drinking does the opposite.  
+* There is a dependence in our Multivariable model because the statistic of famrel(family relation) is 2.03 and 1.5 for alcohol consumption and 1.8 for our intervariable total_alc:famrel... All of which are greater than one. The statistic(R2) provides a measure of how well the model is fitting the actual data. It takes the form of a proportion of variance. Thus we can reject the null hypothesis (that there is no relation/dependence). This finding would suggest that we should include famrel and Dalc as another covariable in our regression analysis of life expectancy across time.  
+* In our second linear model, we prove that family has a negative linear relationship with alcohol. As family relations improve (by 1 point), a students alcohol consumption goes down by .077. 
+* Here is a really good chapter that goes over the multivariate methods we employed in our analysis above: [multivariate methods](http://idiom.ucsd.edu/~rlevy/pmsl_textbook/chapters/pmsl_3.pdf).
+    
+
+
+Lets do an analysis of variance using Anova:  
+
+* [anova guide](http://www.sthda.com/english/wiki/one-way-anova-test-in-r)  
+* The link is a guide on anova functions if you are curious in other ways to use it.
+
+```{r anova, warning=FALSE}
+ anova(fit1, fit2, test = "F")
+```
+- The pvalue of model 1 that incorporates both Alc-consumption and family-relations performs the best because its pvalue is the smallest (p = 0.0834) which means that adding interaction between family-relationship and Alc-consumptions significantly improved the fit of our model.
+
+
+
+##11. MultiFaceted graph
+
+####Lets make a multifaceted plot of our students' sex, studytime, age, and final grade in order to make observations that include all these factors.
+```{r 11.1, warning=FALSE}
+student_data %>%
+  ggplot(aes(x=studytime, y=G3)) +
+  facet_grid(age~sex) +
+  geom_point() + 
+  geom_smooth(method=lm)
+```
+
+Observations:  
+  
+* for each mini graph, the y axis represents the Final grade score out of 20 and the x axis represents the study hours.  
+* As for the split in graphs, they are split vertically by age of student and horizontally by sex of student.  
+* Overall we can say that studying improves grades for all ages of students and sexes of students.  
+
+
+
+##12. Machine Learning LDA: determining students' desire to pursue higher education
+
+####Machine Learning with LDA (Linear Descrimant Analysis)  
+
+- Lets train a LDA that can predict wether a student wants to study in higher education (college) based on the grades the students get in his math class.
+
+
+####12.1. Class means and squared error
+Compute class means and squared error based on class mean.
+```{r 12, warning=FALSE}
+lda_stats <- student_data %>% 
+  group_by(higher) %>% 
+  mutate(class_mean=mean(studytime),
+         squared_error=(studytime-class_mean)^2) 
+```
+
+
+####12.2. Sum of squared errors
+Let's compute the class sizes and sum of squared errors.
+```{r 12.1, warning=FALSE}
+lda_stats <- lda_stats %>%
+  summarize(class_mean=first(class_mean),
+            class_size=n(),
+            sum_squares=sum(squared_error))
+```
+
+
+####12.3. Variance  
+Compute class prior and variance (note same variance for both classes).
+```{r 12.2, warning=FALSE}
+lda_stats <- lda_stats %>%
+  mutate(class_prior=class_size/sum(class_size),
+         sigma2=sum(sum_squares) / (sum(class_size) - 2)) %>%
+  dplyr::select(higher, class_mean, class_prior, sigma2)
+lda_stats
+```
+- How do we predict with LDA? Predict Yes if P(Y=1 |X) > P(Y=0 |X), no otherwise.
+
+
+- But how do we solve P(Y=1 |X) > P(Y=0 |X). There is a formula but we will do it in r code.
+
+```{r 12.3, warning=FALSE}
+lda_log_ratio <- function(studytime, lda_stats) {
+  n <- length(studytime)
+  
+  # subtract class mean
+  centered_studytime <- rep(studytime, 2) - rep(lda_stats$class_mean, each=n)
+  
+  # scale by standard deviation
+  scaled_studytime <- centered_studytime / sqrt(lda_stats$sigma2[1])
+  
+  # compute log normal density and add log class prior
+  lprobs <- dnorm(scaled_studytime, log=TRUE) + log(rep(lda_stats$class_prior, each=n))
+  
+  # compute log ratio of class probabilities
+  lprobs <- matrix(lprobs, nc=2)
+  colnames(lprobs) <- lda_stats$higher
+  lprobs[,"yes"] - lprobs[,"no"]
+}
+```
+
+
+####12.4. Predictions
+```{r 12.4, warning=FALSE}
+testStudytime <- seq(0, 4, len=100)
+plot(testStudytime, lda_log_ratio(testStudytime, lda_stats),
+     type="l", xlab="studytime", ylab="Log Probability Ratio", cex=1.4)
+```
+
+The following plot shows the predictions of our trained LDA model on a test dataset that consisted of randomly selected study times. Our predictions follow a linear postive slope. It shows that the more hours a student studies, the more likely he is also to be someone that plans to pursue a higher education.
+
+
+Now, Lets evaluate how well our classifier performs. We made some predictions earlier, but how true are those predictions? How good is our model? We can find out by measuring the error rate of the classifier. In other words, the amount of mistakes our classifier makes when it predicts a students desire for pursuing higher education based on how much they study.
+
+In the following we will print out a table that displays the truth table of our models predictions.
+
+
+####12.5. Truth Table
+```{r 12.5, warning=FALSE}
+library(MASS)
+lda_fit <- lda(higher ~ studytime, data=student_data)
+lda_pred <- predict(lda_fit, data=student_data)
+print(table(predicted=lda_pred$class, observed=student_data$higher))
+```
+
+This table shows that our model never predicts any student to not be pursuing a higher education level. But, it correctly predicted 375 students to be pursuing higher education but predicted 20 incorectly.
+
+To calculate the error rate, we compare how many predictions were not the same as the answer, and find the mean.
+
+
+####12.6. Error Rate
+```{r 12.6, warning=FALSE}
+# error rate
+mean(student_data$higher != lda_pred$class) * 100
+```
+
+Five is a pretty good number, so LDA works accurately. It is succeesful 375 times out of 395 predictions.
+
+
+We can illustrate how well our model works with the false positive rate and the true positive rate by plotting a ROC Curve.  
+A receiver operating characteristic curve, or ROC curve, is a graphical plot that illustrates the diagnostic ability of a binary classifier system as its discrimination threshold is varied. The ROC curve is created by plotting the true positive rate against the false positive rate at various threshold settings.
+
+
+####12.7. ROC
+```{r 12.7, warning=FALSE}
+#install.packages("ROCR")
+library(ROCR)
+pred <- prediction(lda_pred$posterior[,"yes"], student_data$higher)
+layout(cbind(1,2))
+plot(performance(pred, "tpr"))
+plot(performance(pred, "fpr"))
+```
+When there is more area that is under the roc curve, this means that our model preforms well. In this case, our curve is close to splitting the plot in half which is not very good. A good curve would follow logistic line that sticks close to the top right and left edges.
+
+We can also plot a AUC-ROC for more information on our model. AUC represents degree or measure of separability. It tells how much this model is capable of distinguishing between classes/higher-education-pursuit. 
+
+
+####12.8. AUROC
+```{r 12.8, warning=FALSE}
+full_lda <- lda(higher~., data=student_data)
+full_lda_preds <- predict(full_lda, student_data)
+
+pred_list <- list(
+  studytime_lda = lda_pred$posterior[,"yes"],
+  full_lda = full_lda_preds$posterior[,"yes"],
+  dummy = rep(0, nrow(student_data)))
+
+pred_objs <- lapply(pred_list,
+  prediction, student_data$higher)
+
+aucs <- sapply(pred_objs, 
+  function(x) unlist(
+    performance(x, "auc")@y.values))
+
+roc_objs <- lapply(pred_objs, 
+  performance, "tpr", "fpr")
+```
+```{r split_release_date, warning=FALSE}
+for (i in seq(along=roc_objs)) {
+  plot(roc_objs[[i]], add = i != 1, col=i, 
+       lwd=3, cex.lab=1.5)
+}
+legend("bottomright", 
+       legend=paste(gsub("_", " ", names(pred_list)), "AUROC=",round(aucs, 2)), 
+       col=1:3, lwd=3, cex=2)
+```
+
+
+
+Now let's show the precision recall of this LDA. A precision-recall curve shows the relationship between precision (= positive predictive value) and recall (= sensitivity) for every possible cut-off. The PRC is a graph with:  
+
+* The x-axis showing recall (= sensitivity = TP / (TP + FN))  
+* The y-axis showing precision (= positive predictive value = TP / (TP + FP))
+
+
+####12.9. Precision Recall
+```{r 12.9, warning=FALSE}
+library(caTools)
+pr_objs <- lapply(pred_objs, 
+  performance, "prec", "rec")
+
+for (i in seq(along=pr_objs)) {
+  plot(pr_objs[[i]], add = i != 1, col=i, 
+       lwd=3, cex.lab=1.5)
+}
+legend("bottomleft", 
+       legend=paste(gsub("_", " ", names(pred_list))),
+      col=1:3, lwd=3, cex=2)
+```
+
+So as our models precision is very high and good, it sacrifices recall. So in order to get accuracy, our model sacrifices relevance. And as we improve our models result's relevance, we sacrifice the precision of our results.
